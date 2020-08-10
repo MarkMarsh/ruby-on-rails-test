@@ -1,8 +1,8 @@
 <p id="notice"><%= notice %></p>
 
-<h1>File Stats</h1>
+<h1>File Statistics Calculator</h1>
 
-<table>
+<table id="file_list">
   <thead>
     <tr>
       <th>Filename</th>
@@ -22,7 +22,7 @@
         <td><%= file_stat.palindrome_status %></td>
         <td><%= link_to 'Show', file_stat %></td>
         <td><%= link_to 'Edit', edit_file_stat_path(file_stat) %></td>
-        <td><%= link_to 'Destroy', file_stat, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+        <td><%= link_to 'Delete', file_stat, method: :delete, data: { confirm: 'Are you sure?' } %></td>
       </tr>
     <% end %>
   </tbody>
@@ -31,3 +31,5 @@
 <br>
 
 <%= link_to 'New File Stat', new_file_stat_path %>
+
+
