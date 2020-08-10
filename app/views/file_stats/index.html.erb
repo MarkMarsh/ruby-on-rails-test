@@ -5,19 +5,17 @@
 <table>
   <thead>
     <tr>
-      <th>Username</th>
       <th>Filename</th>
-      <th>Most status</th>
-      <th>Least status</th>
-      <th>Palindrome status</th>
-      <th colspan="3"></th>
+      <th>Most Popular</th>
+      <th>Least Popular</th>
+      <th>Palindromes</th>
+      <th colspan="3">Actions</th>
     </tr>
   </thead>
 
   <tbody>
     <% @file_stats.each do |file_stat| %>
       <tr>
-        <td><%= file_stat.username %></td>
         <td><%= file_stat.filename %></td>
         <td><%= file_stat.most_status %></td>
         <td><%= file_stat.least_status %></td>
