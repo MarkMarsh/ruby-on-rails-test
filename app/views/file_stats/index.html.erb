@@ -1,0 +1,35 @@
+<p id="notice"><%= notice %></p>
+
+<h1>File Stats</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Username</th>
+      <th>Filename</th>
+      <th>Most status</th>
+      <th>Least status</th>
+      <th>Palindrome status</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @file_stats.each do |file_stat| %>
+      <tr>
+        <td><%= file_stat.username %></td>
+        <td><%= file_stat.filename %></td>
+        <td><%= file_stat.most_status %></td>
+        <td><%= file_stat.least_status %></td>
+        <td><%= file_stat.palindrome_status %></td>
+        <td><%= link_to 'Show', file_stat %></td>
+        <td><%= link_to 'Edit', edit_file_stat_path(file_stat) %></td>
+        <td><%= link_to 'Destroy', file_stat, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New File Stat', new_file_stat_path %>

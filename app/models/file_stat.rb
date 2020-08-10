@@ -1,0 +1,2 @@
+class FileStat < ApplicationRecord
+end

@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  username: MyString
+  filename: MyText
+  most_status: false
+  least_status: false
+  palindrome_status: false
+
+two:
+  username: MyString
+  filename: MyText
+  most_status: false
+  least_status: false
+  palindrome_status: false
