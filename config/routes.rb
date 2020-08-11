@@ -1,6 +1,11 @@
+require 'sidekiq/web'
+
 Rails.application.routes.draw do
   root to: 'file_stats#index'
-  
+
+  #if Rails.env.development?
+    mount Sidekiq::Web => '/sidekiq'
+  #end
   
   resources :file_stats
   

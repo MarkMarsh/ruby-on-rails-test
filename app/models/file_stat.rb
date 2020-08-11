@@ -8,6 +8,7 @@ class FileStat < ApplicationRecord
 
   def process_file
     logger.debug "Processing " + self.filename
-    FileStatsWorker.perform_async(self.filename, 5) 
+    jid = FileStatsWorker.perform_async(self.filename, 5) 
+    logger.debug "Job ID " + jid
   end
 end

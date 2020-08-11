@@ -17,7 +17,13 @@
     <% @file_stats.each do |file_stat| %>
       <tr>
         <td><%= file_stat.filename %></td>
-        <td><%= file_stat.most_status %></td>
+        <td>
+          <% if file_stat.most_status %>
+            Available
+          <% else %>
+            Processing
+          <% end %>
+        </td>
         <td><%= file_stat.least_status %></td>
         <td><%= file_stat.palindrome_status %></td>
         <td><%= link_to 'Show', file_stat %></td>
@@ -27,9 +33,9 @@
     <% end %>
   </tbody>
 </table>
-
 <br>
-
 <%= link_to 'New File Stat', new_file_stat_path %>
+<br>
+<h3 class="js">Job Count: <%= get_queue_length() %></h3>
 
 

@@ -5,6 +5,7 @@ class FileStatsController < ApplicationController
   # GET /file_stats.json
   def index
     @file_stats = FileStat.all
+    @file_stats_helper = FileStatsHelper
   end
 
   # GET /file_stats/1
