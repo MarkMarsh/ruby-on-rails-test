@@ -7,6 +7,7 @@ class FileStat < ApplicationRecord
   end
 
   def process_file
-    HardWorker.perform_async(self.filename, 5) 
+    logger.debug "Processing " + self.filename
+    FileStatsWorker.perform_async(self.filename, 5) 
   end
 end
