@@ -10,16 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_10_171426) do
+ActiveRecord::Schema.define(version: 2020_08_11_195151) do
 
   create_table "file_stats", force: :cascade do |t|
     t.string "username", null: false
     t.text "filename", null: false
-    t.boolean "most_status", default: false, null: false
-    t.boolean "least_status", default: false, null: false
-    t.boolean "palindrome_status", default: false, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "job_id"
+    t.string "status"
   end
 
 end
