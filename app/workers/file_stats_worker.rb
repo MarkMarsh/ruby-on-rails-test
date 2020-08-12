@@ -1,16 +1,13 @@
+require 'fileutils'
+
 class FileStatsWorker
+  include FileStatsHelper
   include Sidekiq::Worker
   sidekiq_options queue: 'file_stats'
 
-  def perform(name, count)
-    puts("doing something", name, count)
-    if name == "throw"
-      throw "fake error"
-    end
-
-    if name == "sleep"
-      sleep(10*60)
-    end
+  def perform(filename, results_base)
+    results_dir = results_base  + jid + '/'
+    process_file(filename, results_dir)
   end
 
 end
