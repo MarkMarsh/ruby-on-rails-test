@@ -1,4 +1,6 @@
 class FileStatsController < ApplicationController
+  include FileStatsHelper
+
   before_action :set_file_stat, only: [:show, :edit, :update, :destroy]
 
   # GET /file_stats
@@ -55,6 +57,9 @@ class FileStatsController < ApplicationController
   # DELETE /file_stats/1
   # DELETE /file_stats/1.json
   def destroy
+    #if @file_stat.status != 'Finished'
+      delete_job(@file_stat.job_id)
+    #end
     @file_stat.destroy
     respond_to do |format|
       format.html { redirect_to file_stats_url, notice: 'File stat was successfully destroyed.' }
