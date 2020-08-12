@@ -1,0 +1,9 @@
+:concurrency: 5
+test:
+  :concurrency: 10
+production:
+  :concurrency: 20
+:queues:
+  - file_stats
+  - default
+  
