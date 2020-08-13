@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_13_172043) do
+ActiveRecord::Schema.define(version: 2020_08_13_204615) do
 
   create_table "file_stats", force: :cascade do |t|
     t.string "username", null: false
@@ -20,7 +20,7 @@ ActiveRecord::Schema.define(version: 2020_08_13_172043) do
     t.string "job_id"
     t.string "status"
     t.string "status_message"
-    t.integer "progress"
+    t.string "progress"
   end
 
 end
