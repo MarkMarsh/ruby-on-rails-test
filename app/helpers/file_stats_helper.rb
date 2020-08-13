@@ -6,11 +6,6 @@ module FileStatsHelper
     return('/tmp/file_stats/results/')
   end
 
-  def get_job_status(job_id)
-    return("Finished")
-  end
-
-  
   def delete_job(job_id)
     Sidekiq::Queue.new("file_stats").each do |job|
       if job.jid == job_id
@@ -64,6 +59,7 @@ module FileStatsHelper
       logger.warn "processing file: " + filename
       FileUtils.mkdir_p(results_dir)
       words = Hash.new(0) # for most and least popular words
+      pali = Hash.new(0) # for palindromic words
       s = File.open(filename,'r') do |s|
         word = ''
         s.each_char do |chr|
@@ -74,12 +70,16 @@ module FileStatsHelper
           else
             if word.size > 0
               words[word] += 1
+              if word == word.reverse
+                pali[word] += 1
+              end
               word = ''
             end
           end
         end
       end
       # write the result files
+      # dump the top 10 words by frequency desc
       most = File.new(results_dir + 'most.txt', 'w')
       n = 0
       words.sort_by{|k, v| -v}.each do |row|
@@ -90,6 +90,7 @@ module FileStatsHelper
         end
       end
       most.close()
+      # dump all the words with the lowest frequency
       least = File.new(results_dir + 'least.txt', 'w')
       min = -1
       words.sort_by{|k, v| v}.each do |row|
@@ -103,7 +104,14 @@ module FileStatsHelper
         least.write("#{row[0]} = #{row[1]}\n")
       end
       least.close()
+      # dump all the palindromes but sort desc
+      palifile = File.new(results_dir + 'palindromes.txt', 'w')
+      pali.sort_by{|k, v| -v}.each do |row|
+        #logger.warn "#{row[0]} = #{row[1]}"
+        palifile.write("#{row[0]} = #{row[1]}\n")
+      end
+      palifile.close()
     end
-    return true
+  return true
   end
 end
