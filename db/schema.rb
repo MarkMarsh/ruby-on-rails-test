@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_11_195151) do
+ActiveRecord::Schema.define(version: 2020_08_13_172043) do
 
   create_table "file_stats", force: :cascade do |t|
     t.string "username", null: false
@@ -19,6 +19,8 @@ ActiveRecord::Schema.define(version: 2020_08_11_195151) do
     t.datetime "updated_at", precision: 6, null: false
     t.string "job_id"
     t.string "status"
+    t.string "status_message"
+    t.integer "progress"
   end
 
 end

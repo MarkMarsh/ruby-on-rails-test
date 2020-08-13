@@ -1,13 +1,21 @@
 <p id="notice"><%= notice %></p>
 
 <h1>File Statistics Calculator</h1>
+<br>
+<%= button_to 'Analyse a new file', new_file_stat_path, :method => "get" %>
+
+<h3 class="js"># Queued analyses: <%= get_queue_length() %></h3>
+
+<h3 class="js"># Running analyses: <%= get_running_jobs() %></h3>
 
 <table id="file_list">
   <thead>
     <tr>
       <th>Filename</th>
       <th>Status</th>
-      <th colspan="3">Actions</th>
+      <th>Progress</th>
+      <th>Job ID</th>
+      <th colspan="2">Actions</th>
     </tr>
   </thead>
 
@@ -16,21 +24,16 @@
       <tr>
         <td><%= file_stat.filename %></td>
         <td><%= file_stat.status %></td>
+        <td><%= file_stat.progress %></td>
+        <td><%= file_stat.job_id %></td>
         <td><%= link_to 'Show', file_stat %></td>
-        <td><%= link_to 'Edit', edit_file_stat_path(file_stat) %></td>
         <td><%= link_to 'Delete', file_stat, method: :delete, data: { confirm: 'Are you sure?' } %></td>
       </tr>
     <% end %>
   </tbody>
 </table>
 <br>
+<!--
 <%= link_to 'New File Stat', new_file_stat_path %>
-<br>
-<h3 class="js"># Queued: <%= get_queue_length() %></h3>
-<br>
-<h3 class="js"># Job Status: <%= dump_job_status() %></h3>
-<br>
-<h3 class="js"># Test: <%= process_file('/home/markm/tmp/palindromes/theWheelOfTime.txt', '/tmp/test/results/jid1/') %></h3>
-
-
+<br> -->
 

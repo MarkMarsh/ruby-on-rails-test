@@ -10,15 +10,25 @@
   <%= @file_stat.job_id %>
 </p>
 
-<% if @file_stat.status != 'Finished' %>
-  <p>
-    <strong>Status:</strong>
-    <%= @file_stat.status %>  <%# TODO maybe make live from Sidekiq %>
-  </p>
-<% else %>
-<h2> Results of analysis </h2>
+<p>
+  <strong>Status:</strong>
+  <%= @file_stat.status %>
+  <% if @file_stat.status == 'Processing' %>
+    <br><strong>&nbsp;Progress:</strong>
+    <%= @file_stat.progress %>
+  <% end %>
+  <% if @file_stat.status.downcase().include? 'error' %>
+    <br><strong>&nbsp;Message:</strong>
+    <%= @file_stat.status_message %>
+  <% end %>
+</p>
+
+<%= button_to 'Back to analysis list', file_stats_path, :method => "get"  %>
+<br>
+
+<% if @file_stat.status == 'Processed' %>
+  <h2> Results of analysis </h2>
+  <%= File.read("/tmp/file_stats/results/#{@file_stat.job_id}/palindromes.txt") %>
 <% end %>
 
 
-<%= link_to 'Edit', edit_file_stat_path(@file_stat) %> |
-<%= link_to 'Back', file_stats_path %>
