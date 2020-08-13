@@ -31,6 +31,12 @@ class FileStatsController < ApplicationController
 
     respond_to do |format|
       if @file_stat.save
+
+        logger.debug("Starting sidekiq process for file #{@file_stat.filename} database id #{@file_stat.id}")
+        jid = FileStatsWorker.perform_async(@file_stat.filename, get_results_base_dir(), @file_stat.id) 
+        @file_stat.job_id = jid
+        @file_stat.save
+
         format.html { redirect_to @file_stat, notice: 'File stat was successfully created.' }
         format.json { render :show, status: :created, location: @file_stat }
       else
@@ -60,6 +66,9 @@ class FileStatsController < ApplicationController
     #if @file_stat.status != 'Finished'
       delete_job(@file_stat.job_id)
     #end
+
+    delete_results(@file_stat.job_id)
+
     @file_stat.destroy
     respond_to do |format|
       format.html { redirect_to file_stats_url, notice: 'File stat was successfully destroyed.' }
