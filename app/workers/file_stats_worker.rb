@@ -5,9 +5,8 @@ class FileStatsWorker
   include Sidekiq::Worker
   sidekiq_options queue: 'file_stats'
 
-  def perform(filename, results_base, dbid)
-    results_dir = results_base  + jid + '/'
-    process_file(filename, results_dir, dbid)
+  def perform(filename, dbid)
+    process_file(filename, dbid)
   end
 
 end

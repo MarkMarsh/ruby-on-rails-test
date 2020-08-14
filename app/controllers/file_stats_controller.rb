@@ -33,7 +33,7 @@ class FileStatsController < ApplicationController
       if @file_stat.save
 
         logger.debug("Starting sidekiq process for file #{@file_stat.filename} database id #{@file_stat.id}")
-        jid = FileStatsWorker.perform_async(@file_stat.filename, get_results_base_dir(), @file_stat.id) 
+        jid = FileStatsWorker.perform_async(@file_stat.filename, @file_stat.id) 
         @file_stat.job_id = jid
         @file_stat.save
 

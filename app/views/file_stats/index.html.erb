@@ -14,7 +14,6 @@
       <th>Filename</th>
       <th>Status</th>
       <th>Progress</th>
-      <th>Job ID</th>
       <th colspan="2">Actions</th>
     </tr>
   </thead>
@@ -25,7 +24,6 @@
         <td><%= file_stat.filename %></td>
         <td><%= file_stat.status %></td>
         <td><%= file_stat.progress %></td>
-        <td><%= file_stat.job_id %></td>
         <td><%= link_to 'Show', file_stat %></td>
         <td><%= link_to 'Delete', file_stat, method: :delete, data: { confirm: 'Are you sure?' } %></td>
       </tr>

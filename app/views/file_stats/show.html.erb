@@ -6,11 +6,6 @@
 </p>
 
 <p>
-  <strong>Job ID:</strong>
-  <%= @file_stat.job_id %>
-</p>
-
-<p>
   <strong>Status:</strong>
   <%= @file_stat.status %>
   <% if @file_stat.status == 'Processing' %>
@@ -27,8 +22,61 @@
 <br>
 
 <% if @file_stat.status == 'Processed' %>
-  <h2> Results of analysis </h2>
-  <%= File.read("/tmp/file_stats/results/#{@file_stat.job_id}/palindromes.txt") %>
+
+  <h2>Results of analyses</h2>
+
+  <h3>Top 10 most frequent words:</h3>
+  <table id="result_list">
+  <thead>
+    <tr>
+      <th>Word</th>
+      <th>Frequency</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% File.open("#{get_results_dir(@file_stat.id)}most.txt").each do |file_stat| %>
+      <tr>
+        <td><%= file_stat.split(',')[0] %></td> <td><%= file_stat.split(',')[1] %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+  <h3>Palindromic words:</h3>
+  <table id="result_list">
+  <thead>
+    <tr>
+      <th>Word</th> <th>Frequency</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% File.open("#{get_results_dir(@file_stat.id)}palindromes.txt").each do |file_stat| %>
+      <tr>
+        <td><%= file_stat.split(',')[0] %></td> <td><%= file_stat.split(',')[1] %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<h3>Least frequent words:</h3>
+  <table id="result_list">
+  <thead>
+    <tr>
+      <th>Word</th> <th>Frequency</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% File.open("#{get_results_dir(@file_stat.id)}least.txt").each do |file_stat| %>
+      <tr>
+        <td><%= file_stat.split(',')[0] %></td> <td><%= file_stat.split(',')[1] %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
 <% end %>
 
 

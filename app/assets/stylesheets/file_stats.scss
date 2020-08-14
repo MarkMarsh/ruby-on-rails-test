@@ -35,3 +35,26 @@
 #file_stat_filename {
   width: 300px
 }
+
+#result_list {
+  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#result_list td, #result_list th {
+  border: 2px solid #ddd;
+  padding: 8px;
+}
+
+#result_list tr:nth-child(even){background-color: #f2f2f2;}
+
+#result_list tr:hover {background-color: #ddd;}
+
+#result_list th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #4CAF50;
+  color: white;
+}

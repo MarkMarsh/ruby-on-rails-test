@@ -6,6 +6,10 @@ module FileStatsHelper
     return('/tmp/file_stats/results/')
   end
   
+  def get_results_dir(dbid)
+    return("#{get_results_base_dir()}/#{dbid}/")
+  end
+  
   # stub for integration with authentication
   def get_current_user()  
     return "Eric"
@@ -85,7 +89,7 @@ module FileStatsHelper
   def is_job_paused(job_id)
   end
 
-  def process_file(filename, results_dir, dbid)
+  def process_file(filename, dbid)
     update_status('Processing', '', dbid)
     begin
       if filename == "throw"          # test error condition (blank filename works as well)
@@ -110,7 +114,7 @@ module FileStatsHelper
           update_progress("", dbid)
         end
       else                            # process a file
-        FileUtils.mkdir_p(results_dir)
+        FileUtils.mkdir_p(get_results_dir(dbid))
         words = Hash.new(0) # for most and least popular words
         pali = Hash.new(0) # for palindromic words
         flen = File.size(filename)
@@ -142,7 +146,7 @@ module FileStatsHelper
         end
         # write the result files
         # dump the top 10 words by frequency desc
-        most = File.new(results_dir + 'most.txt', 'w')
+        most = File.new(get_results_dir(dbid) + 'most.txt', 'w')
         n = 0
         words.sort_by{|k, v| -v}.each do |row|
           #logger.debug "#{row[0]} = #{row[1]}"
@@ -153,7 +157,7 @@ module FileStatsHelper
         end
         most.close()
         # dump all the words with the lowest frequency
-        least = File.new(results_dir + 'least.txt', 'w')
+        least = File.new(get_results_dir(dbid) + 'least.txt', 'w')
         min = -1
         words.sort_by{|k, v| v}.each do |row|
           if min == -1
@@ -167,7 +171,7 @@ module FileStatsHelper
         end
         least.close()
         # dump all the palindromes but sort desc
-        palifile = File.new(results_dir + 'palindromes.txt', 'w')
+        palifile = File.new(get_results_dir(dbid) + 'palindromes.txt', 'w')
         pali.sort_by{|k, v| -v}.each do |row|
           #logger.debug "#{row[0]} = #{row[1]}"
           palifile.write("#{row[0]},#{row[1]}\n")
