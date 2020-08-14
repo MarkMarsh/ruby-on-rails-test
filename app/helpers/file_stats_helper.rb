@@ -89,22 +89,26 @@ module FileStatsHelper
     update_status('Processing', '', dbid)
     begin
       if filename == "throw"          # test error condition (blank filename works as well)
-        throw "forced error"
+        if Rails.env.development?
+          throw "forced error"
+        end
       elsif filename[0,5] == "sleep"  # simulate processing a file without high system load
-        len = 10*60 # default sleep length
-        s = filename.split(' ')
-        if s.size > 1
-          logger.debug "sleeping for " + s[1] + "seconds"
-          len = s[1].to_i()
-        else
-          logger.debug "sleeping for ten minutes"
+        if Rails.env.development?
+          len = 10*60 # default sleep length
+          s = filename.split(' ')
+          if s.size > 1
+            logger.debug "sleeping for " + s[1] + "seconds"
+            len = s[1].to_i()
+          else
+            logger.debug "sleeping for ten minutes"
+          end
+          (1..len).step(5) do |i|
+            logger.debug "sleep step #{i} of #{len}"
+            update_progress("#{(((i * 100.0) / len) + 0.5).to_i()}%", dbid)
+            sleep(5)
+          end
+          update_progress("", dbid)
         end
-        (1..len).step(5) do |i|
-          logger.debug "sleep step #{i} of #{len}"
-          update_progress("#{(((i * 100.0) / len) + 0.5).to_i()}%", dbid)
-          sleep(5)
-        end
-        update_progress("", dbid)
       else                            # process a file
         FileUtils.mkdir_p(results_dir)
         words = Hash.new(0) # for most and least popular words
