@@ -20,12 +20,17 @@ cd ruby-on-rails-test
 ## Execution
 
 * Make sure Redis is running
-* Make sure a Sidekiq worker is running (below)
-* Run the following command (the -b option is only required if you want to connect from another machine)
+* Make sure a Sidekiq worker is running (see below)
+* Run the following commands (the -b option to rails is only required if you want to connect from another machine)
 
 *Todo: work out how to run in production mode (setup secret key etc)*
 ```
 cd <root of project>
+
+# if Redis is running on a different machine
+export REDIS_URL":"redis://<redis server IP>:6379/0"
+
+# run the webserver application
 rails s -b 0.0.0.0
 ```
 Connect to the webserver at http://<hostname>:3000
@@ -35,15 +40,21 @@ Connect to the webserver at http://<hostname>:3000
 
 ### Sidekiq 
 
-Sidekiq uses a worker process that communicates via Redis. At least one of these processes must be running (see below). The default configuration is
-to look for redis on localhost:6379.
+Sidekiq uses a worker process that communicates via Redis. At least one of these worker  processes must be running (see below). The default configuration is
+to look for redis on localhost:6379 but it can be overidden by setting the "REDIS_URL" environment variable - https://github.com/mperham/sidekiq/wiki/Using-Redis
 
-*Todo: add multi node config details*
+
 
 ```
 # make sure redis is running then:
 cd <root of project>
+
+# if Redis is running on a different machine
+export REDIS_URL":"redis://<redis server IP>:6379/0"
+
+# run the worker process
 nohup bundle exec sidekiq -q file_stats >log/sidekiq.log 2>&1 &
+
 # to monitor
 tail -f log/sidekiq.log
 ```
@@ -77,9 +88,9 @@ The following packages are required
 
 ### Adding more processing nodes
 
-The results are currently stored in /tmp, this will need changing to a shared filesystem or an object store (S3 etc)
+Sidekiq can run processing workers on multiple nodes (physical machines or EC2 instances for example), the following changes need to be made for this to work.
 
-The Redis configuration will need changing so that the Sidekiq workers all use the same Redis servers rather than looking for a local one.
+* The results are currently stored in /tmp, this will need changing to a shared filesystem or an object store (S3 etc)
 
 ### Debugging
 To facilitate debugging from vscode (using WSL2 on Windows 10), add the ruby-debug-ide and debase gems - e.g.
@@ -94,11 +105,12 @@ code .
 
 ## To Do
 
-* Work on presentation - html & css (use bootstrap?)
+* Work on presentation 
+  - html & css (use bootstrap?)
+  - add facility to submit a file directly from the main page
 * Add validation (check file exists)
-* Add other file types 
+* Add other file file storage types (S3 etc)
 * Add a file picker for local file system
-* Configure sidekiq to get the Redis location from the environment
 * Document running in production mode
 * Test running with distributed workers
 * Use a "proper" database
