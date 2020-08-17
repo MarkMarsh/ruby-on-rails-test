@@ -28,7 +28,7 @@ cd ruby-on-rails-test
 cd <root of project>
 
 # if Redis is running on a different machine
-export REDIS_URL":"redis://<redis server IP>:6379/0"
+export REDIS_URL="redis://<redis server IP>:6379/0"
 
 # run the webserver application
 rails s -b 0.0.0.0
@@ -40,17 +40,20 @@ Connect to the webserver at http://<hostname>:3000
 
 ### Sidekiq 
 
-Sidekiq uses a worker process that communicates via Redis. At least one of these worker  processes must be running (see below). The default configuration is
+Sidekiq uses a worker process that communicates via Redis. At least one of these worker processes must be running (see below). 
+
+Sidekiq uses Redis to communicate between the client (your web app) and the worker processes. The default configuration is
 to look for redis on localhost:6379 but it can be overidden by setting the "REDIS_URL" environment variable - https://github.com/mperham/sidekiq/wiki/Using-Redis
 
-
+Sidekiq will use up to 100% of one core so you can increase processing by running multiple worker
+processes on a single instance (EC2 instance, physical machine or VM) and / or running workers on multiple instances.
 
 ```
 # make sure redis is running then:
 cd <root of project>
 
 # if Redis is running on a different machine
-export REDIS_URL":"redis://<redis server IP>:6379/0"
+export REDIS_URL="redis://<redis server IP>:6379/0"
 
 # run the worker process
 nohup bundle exec sidekiq -q file_stats >log/sidekiq.log 2>&1 &
@@ -90,7 +93,9 @@ The following packages are required
 
 Sidekiq can run processing workers on multiple nodes (physical machines or EC2 instances for example), the following changes need to be made for this to work.
 
-* The results are currently stored in /tmp, this will need changing to a shared filesystem or an object store (S3 etc)
+* The results are currently stored in /tmp, this will need changing to a shared filesystem, an object store (S3 etc) or in the database.
+
+* The status update is stored in the database - this needs to be shared (move to MongoDB)
 
 ### Debugging
 To facilitate debugging from vscode (using WSL2 on Windows 10), add the ruby-debug-ide and debase gems - e.g.
@@ -111,9 +116,9 @@ code .
 * Add validation (check file exists)
 * Add other file file storage types (S3 etc)
 * Add a file picker for local file system
+* Use MongoDB as the database
 * Document running in production mode
 * Test running with distributed workers
-* Use a "proper" database
 * Work out minimum component versions and update Gemfile / docs
 * Add authentication - maybe https://github.com/thoughtbot/clearance ?
 * Move processing progress update to Redis from the database
