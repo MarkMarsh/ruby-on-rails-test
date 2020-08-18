@@ -9,6 +9,9 @@
             "type": "Ruby",
             "request": "launch",
             "program": "${workspaceRoot}/bin/rails",
+            "env": {
+                "REDIS_URL":"redis://localhost:6379/0"
+            },
             "args": [
                 "server"
             ]
