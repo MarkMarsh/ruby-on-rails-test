@@ -38,6 +38,17 @@ Connect to the webserver at http://<hostname>:3000
 
 ## Dependencies
 
+### MongoDB
+
+MongoDB is used for the database and it's location is configured in
+`config/mongoid.yml`. It defaults to localhost:27017
+
+A basic MongoDB server running on localhost can be created using docker:
+
+`docker run --name file-stats-mongo -p 27017:27017 -d mongo`
+
+For multi instance deployments, the MongoDB database must be shared between all the Sidekiq workers.
+
 ### Sidekiq 
 
 Sidekiq uses a worker process that communicates via Redis. At least one of these worker processes must be running (see below). 
@@ -116,7 +127,7 @@ code .
 * Add validation (check file exists)
 * Add other file file storage types (S3 etc)
 * Add a file picker for local file system
-* Use MongoDB as the database
+* ~~Use MongoDB as the database~~
 * Document running in production mode
 * Test running with distributed workers
 * Work out minimum component versions and update Gemfile / docs

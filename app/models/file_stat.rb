@@ -1,15 +1,12 @@
-class FileStat < ApplicationRecord
+class FileStat
+  include Mongoid::Document
   include FileStatsHelper
 
-  before_save :do_before_save
-
-  def do_before_save()
-    set_defaults()
-  end  
-  
-  def set_defaults
-    self.username = get_current_user()
-    self.status = "Queued"
-  end
-
+#  field :username, type: String, default: get_current_user()
+  field :username, type: String, default: "Eric"
+  field :filename, type: String
+  field :job_id, type: String
+  field :status, type: String, default: "Queued"
+  field :status_message, type: String, default: ""
+  field :progress, type: String, default: ""
 end

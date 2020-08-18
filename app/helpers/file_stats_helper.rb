@@ -7,7 +7,7 @@ module FileStatsHelper
   end
   
   def get_results_dir(dbid)
-    return("#{get_results_base_dir()}/#{dbid}/")
+    return("#{get_results_base_dir()}/#{dbid.to_s()}/")
   end
   
   # stub for integration with authentication
@@ -15,6 +15,7 @@ module FileStatsHelper
     return "Eric"
   end
 
+  # needs improving to search all queues and also to kill jobs that are processing
   def delete_job(job_id)
     Sidekiq::Queue.new("file_stats").each do |job|
       if job.jid == job_id
@@ -23,56 +24,39 @@ module FileStatsHelper
     end
   end
 
-  def delete_results(job_id)
-    FileUtils.rm_rf("#{get_results_base_dir()}#{job_id}/")
+  def delete_results(dbid)
+    FileUtils.rm_rf("#{get_results_base_dir()}#{dbid.to_s()}/")
   end
 
+  # to report how many jobs are queued
   def get_queue_length()
     return(Sidekiq::Queue.new("file_stats").size)
   end
 
+  # to report how many jobs are running
   def get_running_jobs()
     running = 0
     Sidekiq::ProcessSet.new.each do |process|
       running += process['busy']   
     end
     return(running)
-  end
-
-  def dump_job_status()
-
-    queue = Sidekiq::Queue.new("file_stats")
-    queue.each do |job|
-      p job.jid
-      if job.jid == "8474c114a6445169fd2fd2fa"
-        job.delete 
-      end
-    end
-
-    ps = Sidekiq::ProcessSet.new
-    ps.size # => 2
-    ps.each do |process|
-      p process['busy']     # => 3
-      p process['hostname'] # => 'myhost.local'
-      p process['pid']      # => 16131
-    end
-
-    return(queue.size)
   end    
 
   def update_status(status, message, dbid)
     # couldn't make updates to a model object work in sidekiq worker
     logger.debug("Setting Status #{status} Message #{message} for ID #{dbid}")
-    ActiveRecord::Base.connection.update("update file_stats set status = '#{status}', status_message = '#{message}' where id = #{dbid}")
-    #ActiveRecord::Base.connection.commit()
+
+    fs = FileStat.find(dbid)
+    fs.update(status: status, status_message: message)
   end
 
   # probably done better through Redis
   def update_progress(progress, dbid)
     # couldn't make updates to a model object work in sidekiq worker
     logger.debug("Setting Progress #{progress} for ID #{dbid}")
-    ActiveRecord::Base.connection.update("update file_stats set progress = '#{progress}' where id = #{dbid}")
-    #ActiveRecord::Base.connection.commit()
+
+    fs = FileStat.find(dbid)
+    fs.update(progress: progress)
   end
 
   # set / test a pause semaphore - use Redis

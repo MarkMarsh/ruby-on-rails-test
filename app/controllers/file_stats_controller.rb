@@ -28,6 +28,8 @@ class FileStatsController < ApplicationController
   # POST /file_stats.json
   def create
     @file_stat = FileStat.new(file_stat_params)
+    
+    logger.debug(file_stat_params)
 
     respond_to do |format|
       if @file_stat.save
@@ -67,7 +69,7 @@ class FileStatsController < ApplicationController
       delete_job(@file_stat.job_id)
     #end
 
-    delete_results(@file_stat.job_id)
+    delete_results(@file_stat.id)
 
     @file_stat.destroy
     respond_to do |format|
@@ -84,6 +86,7 @@ class FileStatsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def file_stat_params
-      params.require(:file_stat).permit(:username, :filename, :most_status, :least_status, :palindrome_status)
+      params.require(:file_stat).permit(:username, :filename, :job_id, :status, :status_message, :progress)
     end
+
 end
