@@ -1,13 +1,18 @@
 require 'sidekiq/api'
 
 module FileStatsHelper
+ 
+  class CancelledException < StandardError
+  end
 
   def get_results_base_dir()
     return('/tmp/file_stats/results/')
   end
   
   def get_results_dir(dbid)
-    return("#{get_results_base_dir()}/#{dbid.to_s()}/")
+    dir = "#{get_results_base_dir()}#{dbid.to_s()}/"
+    logger.debug("get_results_dir() = #{dir}")
+    return dir
   end
   
   # stub for integration with authentication
@@ -17,6 +22,7 @@ module FileStatsHelper
 
   # needs improving to search all queues and also to kill jobs that are processing
   def delete_job(job_id)
+    ################################## TODO cancel_job(job_id)   # cancel the job if it's currently executing
     Sidekiq::Queue.new("file_stats").each do |job|
       if job.jid == job_id
         job.delete 
@@ -42,78 +48,116 @@ module FileStatsHelper
     return(running)
   end    
 
-  def update_status(status, message, dbid)
-    # couldn't make updates to a model object work in sidekiq worker
-    logger.debug("Setting Status #{status} Message #{message} for ID #{dbid}")
-
-    fs = FileStat.find(dbid)
-    fs.update(status: status, status_message: message)
-  end
-
-  # probably done better through Redis
-  def update_progress(progress, dbid)
-    # couldn't make updates to a model object work in sidekiq worker
-    logger.debug("Setting Progress #{progress} for ID #{dbid}")
-
-    fs = FileStat.find(dbid)
-    fs.update(progress: progress)
-  end
-
-  # set / test a pause semaphore - use Redis
+  # set / test a pause semaphore
   def pause_job(job_id)
+    Sidekiq.redis {|c| c.setex("pause-#{job_id}", 86400, 1) }
   end
 
-  def is_job_paused(job_id)
+  def unpause_job(job_id)
+    Sidekiq.redis {|c| c.del("pause-#{job_id}", 86400, 1) }
   end
 
-  # set / test a cancel semaphore - use Redis
+  def is_job_paused?(job_id)
+    x = Sidekiq.redis {|c| c.exists("pause-#{job_id}") }
+    logger.debug("#{job_id} paused? #{x}")
+    return x
+  end
+
+  # set / test a cancel semaphore
   def cancel_job(job_id)
+    x = Sidekiq.redis {|c| c.setex("cancel-#{job_id}", 86400, 1) }
+    logger.debug("#{job_id} cancelled? #{x}")
+    return x
   end
 
-  def is_job_paused(job_id)
+  def is_job_cancelled?(job_id)
+    x = Sidekiq.redis {|c| c.exists("cancel-#{job_id}") }
+    logger.debug("Cancelled: #{x}")
+    return x
+  end
+
+  # check whether processing should be paused
+  def check_cancelled(file_stat)
+    if is_job_cancelled?(file_stat.job_id)
+      raise CancelledException.new, 'Cancelled'
+    end
+  end
+
+  # check whether processing should be paused
+  def check_paused(file_stat)
+    if file_stat.job_id.length() < 6
+      raise "Bad Job ID"
+    end
+    logger.debug("Job ID for pause #{file_stat.job_id}")
+    logger.debug("is_job_paused?(#{file_stat.job_id}) : #{is_job_paused?(file_stat.job_id)}")
+    if !is_job_paused?(file_stat.job_id)
+      logger.debug("Not paused")
+      return
+    end
+    prev_progress = file_stat.progress
+    file_stat.update(progress: 'Paused')
+    loop do
+      logger.debug("Pausing 10s")
+      sleep 10
+      break if !is_job_paused?(file_stat.job_id)
+    end 
+    file_stat.update(progress: prev_progress)
+  end
+
+  # maybe better done better through Redis or possibly actionCable
+  def update_progress(progress, file_stat)
+    logger.debug("Setting Progress #{progress} for ID #{file_stat._id}")
+    file_stat.update(progress: progress)
   end
 
   def process_file(filename, dbid)
-    update_status('Processing', '', dbid)
+    file_stat = nil
     begin
-      if filename == "throw"          # test error condition (blank filename works as well)
-        if Rails.env.development?
-          throw "forced error"
+      file_stat = FileStat.find(dbid)
+      if file_stat == nil
+        throw "Failed to find record for FileStat #{dbid}"
+      end
+      file_stat.update(status: 'Processing', status_message: '')
+
+      if Rails.env.development? && filename == "throw"          # for testing error handling
+        throw "forced error"
+      elsif Rails.env.development? && filename[0,5] == "sleep"  # simulate processing a file without high system load
+        len = 10*60 # default sleep length
+        s = filename.split(' ')
+        if s.size > 1
+          logger.debug "sleeping for " + s[1] + "seconds"
+          len = s[1].to_i()
+        else
+          logger.debug "sleeping for ten minutes"
         end
-      elsif filename[0,5] == "sleep"  # simulate processing a file without high system load
-        if Rails.env.development?
-          len = 10*60 # default sleep length
-          s = filename.split(' ')
-          if s.size > 1
-            logger.debug "sleeping for " + s[1] + "seconds"
-            len = s[1].to_i()
-          else
-            logger.debug "sleeping for ten minutes"
-          end
-          (1..len).step(5) do |i|
-            logger.debug "sleep step #{i} of #{len}"
-            update_progress("#{(((i * 100.0) / len) + 0.5).to_i()}%", dbid)
-            sleep(5)
-          end
-          update_progress("", dbid)
+        (1..len).step(5) do |i|
+          check_cancelled(file_stat)
+          check_paused(file_stat)
+          #logger.debug "sleep step #{i} of #{len}"
+          update_progress("#{(((i * 100.0) / len) + 0.5).to_i()}%", file_stat)
+          sleep(5)
         end
+        update_progress("", file_stat)
       else                            # process a file
         FileUtils.mkdir_p(get_results_dir(dbid))
         words = Hash.new(0) # for most and least popular words
         pali = Hash.new(0) # for palindromic words
         flen = File.size(filename)
-        freq = flen / 100 # update every 1% progress
+        freq = [flen / 100, 1000].max # update every 1% progress or 1000 records whichever is the greater
         logger.debug "processing file: #{filename} length #{flen} freq #{freq}"
         charnum = 0
+        # ToDo: 
         s = File.open(filename,'r') do |s|
           word = ''
           s.each_char do |chr|
+            # check_cancelled and check_paused could be checked at a different frequency
             if charnum % freq == 0
-              update_progress("#{(((charnum * 100.0) / flen) + 0.5).to_i()}%", dbid)
+              check_cancelled(file_stat)
+              update_progress("#{(((charnum * 100.0) / flen) + 0.5).to_i()}%", file_stat)
+              check_paused(file_stat)
             end
             charnum += 1
-  
-              c = chr.downcase
+            c = chr.downcase
             o = c.ord
             if((o >= 97 && o <= 122) || (o >= 48 && o <= 57) || o == 45)  # check if number / letter / hyphen
               word.concat(c)
@@ -161,13 +205,16 @@ module FileStatsHelper
           palifile.write("#{row[0]},#{row[1]}\n")
         end
         palifile.close()
-        update_progress("", dbid)
+        update_progress("", file_stat)
       end
+    rescue CancelledException => c
+      file_stat.update(status: 'Cancelled', status_message: '')
+      return true 
     rescue StandardError => e
-      update_status("Processing error", e.message, dbid)  
+      file_stat.update(status: 'Processing error', status_message: e.message)
       raise
     end
-    update_status('Processed', '', dbid)
+    file_stat.update(status: 'Processed', status_message: '')
     return true
   end
 

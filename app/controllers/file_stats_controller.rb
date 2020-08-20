@@ -1,13 +1,30 @@
 class FileStatsController < ApplicationController
   include FileStatsHelper
 
-  before_action :set_file_stat, only: [:show, :edit, :update, :destroy]
+  before_action :set_file_stat, only: [:show, :edit, :update, :destroy, :pause, :unpause, :cancel]
+
+  def pause
+    @file_stat = FileStat.find(params[:id])
+    helpers.pause_job(@file_stat.job_id)
+    redirect_back(fallback_location: root_path)
+  end
+
+  def unpause
+    @file_stat = FileStat.find(params[:id])
+    helpers.unpause_job(@file_stat.job_id)
+    redirect_back(fallback_location: root_path)
+  end
+
+  def cancel
+    @file_stat = FileStat.find(params[:id])
+    helpers.cancel_job(@file_stat.job_id)
+    redirect_back(fallback_location: root_path)
+  end
 
   # GET /file_stats
   # GET /file_stats.json
   def index
     @file_stats = FileStat.all
-    @file_stats_helper = FileStatsHelper
   end
 
   # GET /file_stats/1
@@ -68,7 +85,7 @@ class FileStatsController < ApplicationController
     #if @file_stat.status != 'Finished'
       delete_job(@file_stat.job_id)
     #end
-
+    cancel_job(@file_stat.job_id)
     delete_results(@file_stat.id)
 
     @file_stat.destroy

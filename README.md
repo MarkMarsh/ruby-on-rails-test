@@ -106,7 +106,9 @@ Sidekiq can run processing workers on multiple nodes (physical machines or EC2 i
 
 * The results are currently stored in /tmp, this will need changing to a shared filesystem, an object store (S3 etc) or in the database.
 
-* The status update is stored in the database - this needs to be shared (move to MongoDB)
+* The input files need to be on a shared filesystem so they can be picked up by any worker
+
+* ~~The database needs to be shared so that Sidekiq workers can make status updates (move to MongoDB)~~
 
 ### Debugging
 To facilitate debugging from vscode (using WSL2 on Windows 10), add the ruby-debug-ide and debase gems - e.g.
