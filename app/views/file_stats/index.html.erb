@@ -32,12 +32,12 @@
                 <td><%= link_to 'Pause', pause_file_stat_path(file_stat), method: :put %></td>
         <%    end %>
         <%  else %>
-              <td></td>
+              <%# <td></td> %>
         <%  end %>
         <%  if file_stat.status == 'Processing' %>
               <td><%= link_to 'Cancel', cancel_file_stat_path(file_stat), method: :put %></td>
         <%  else %>
-              <td></td>
+              <%# <td></td>  %>
         <%  end %>
         <td><%= link_to 'Delete', file_stat, method: :delete, data: { confirm: 'Are you sure?' } %></td>
       </tr>

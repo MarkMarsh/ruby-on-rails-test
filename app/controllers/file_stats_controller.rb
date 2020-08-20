@@ -52,7 +52,8 @@ class FileStatsController < ApplicationController
       if @file_stat.save
 
         logger.debug("Starting sidekiq process for file #{@file_stat.filename} database id #{@file_stat.id}")
-        jid = FileStatsWorker.perform_async(@file_stat.filename, @file_stat.id) 
+        jid = FileStatsWorker.perform_async(@file_stat.filename, @file_stat._id.to_s()) 
+        
         @file_stat.job_id = jid
         @file_stat.save
 
@@ -86,7 +87,7 @@ class FileStatsController < ApplicationController
       delete_job(@file_stat.job_id)
     #end
     cancel_job(@file_stat.job_id)
-    delete_results(@file_stat.id)
+    delete_results(@file_stat._id.to_s())
 
     @file_stat.destroy
     respond_to do |format|

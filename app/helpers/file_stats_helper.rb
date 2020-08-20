@@ -9,9 +9,8 @@ module FileStatsHelper
     return('/tmp/file_stats/results/')
   end
   
-  def get_results_dir(dbid)
-    dir = "#{get_results_base_dir()}#{dbid.to_s()}/"
-    logger.debug("get_results_dir() = #{dir}")
+  def get_results_dir(db_id)
+    dir = "#{get_results_base_dir()}#{db_id}/"
     return dir
   end
   
@@ -30,8 +29,9 @@ module FileStatsHelper
     end
   end
 
-  def delete_results(dbid)
-    FileUtils.rm_rf("#{get_results_base_dir()}#{dbid.to_s()}/")
+  def delete_results(db_id)
+    dir = "#{get_results_base_dir()}#{db_id}/"
+    FileUtils.rm_rf(dir)
   end
 
   # to report how many jobs are queued
@@ -58,25 +58,23 @@ module FileStatsHelper
   end
 
   def is_job_paused?(job_id)
-    x = Sidekiq.redis {|c| c.exists("pause-#{job_id}") }
-    logger.debug("#{job_id} paused? #{x}")
+    x = Sidekiq.redis {|c| c.exists?("pause-#{job_id}") }
     return x
   end
 
   # set / test a cancel semaphore
+  # 10 minute timeout should be plenty
   def cancel_job(job_id)
-    x = Sidekiq.redis {|c| c.setex("cancel-#{job_id}", 86400, 1) }
-    logger.debug("#{job_id} cancelled? #{x}")
+    x = Sidekiq.redis {|c| c.setex("cancel-#{job_id}", 600, 1) }   
     return x
   end
 
   def is_job_cancelled?(job_id)
-    x = Sidekiq.redis {|c| c.exists("cancel-#{job_id}") }
-    logger.debug("Cancelled: #{x}")
+    x = Sidekiq.redis {|c| c.exists?("cancel-#{job_id}") }
     return x
   end
 
-  # check whether processing should be paused
+  # check whether processing should be cancelled
   def check_cancelled(file_stat)
     if is_job_cancelled?(file_stat.job_id)
       raise CancelledException.new, 'Cancelled'
@@ -86,19 +84,16 @@ module FileStatsHelper
   # check whether processing should be paused
   def check_paused(file_stat)
     if file_stat.job_id.length() < 6
-      raise "Bad Job ID"
+      raise "Bad Job ID in check_paused()"
     end
-    logger.debug("Job ID for pause #{file_stat.job_id}")
-    logger.debug("is_job_paused?(#{file_stat.job_id}) : #{is_job_paused?(file_stat.job_id)}")
     if !is_job_paused?(file_stat.job_id)
-      logger.debug("Not paused")
       return
     end
     prev_progress = file_stat.progress
     file_stat.update(progress: 'Paused')
     loop do
-      logger.debug("Pausing 10s")
-      sleep 10
+      check_cancelled(file_stat)
+      sleep 5
       break if !is_job_paused?(file_stat.job_id)
     end 
     file_stat.update(progress: prev_progress)
@@ -110,12 +105,12 @@ module FileStatsHelper
     file_stat.update(progress: progress)
   end
 
-  def process_file(filename, dbid)
+  def process_file(filename, db_id)
     file_stat = nil
     begin
-      file_stat = FileStat.find(dbid)
+      file_stat = FileStat.find(db_id)
       if file_stat == nil
-        throw "Failed to find record for FileStat #{dbid}"
+        throw "Failed to find record for FileStat #{db_id}"
       end
       file_stat.update(status: 'Processing', status_message: '')
 
@@ -139,7 +134,6 @@ module FileStatsHelper
         end
         update_progress("", file_stat)
       else                            # process a file
-        FileUtils.mkdir_p(get_results_dir(dbid))
         words = Hash.new(0) # for most and least popular words
         pali = Hash.new(0) # for palindromic words
         flen = File.size(filename)
@@ -173,8 +167,9 @@ module FileStatsHelper
           end
         end
         # write the result files
+        FileUtils.mkdir_p(get_results_dir(db_id))
         # dump the top 10 words by frequency desc
-        most = File.new(get_results_dir(dbid) + 'most.txt', 'w')
+        most = File.new(get_results_dir(db_id) + 'most.txt', 'w')
         n = 0
         words.sort_by{|k, v| -v}.each do |row|
           #logger.debug "#{row[0]} = #{row[1]}"
@@ -185,7 +180,7 @@ module FileStatsHelper
         end
         most.close()
         # dump all the words with the lowest frequency
-        least = File.new(get_results_dir(dbid) + 'least.txt', 'w')
+        least = File.new(get_results_dir(db_id) + 'least.txt', 'w')
         min = -1
         words.sort_by{|k, v| v}.each do |row|
           if min == -1
@@ -199,7 +194,7 @@ module FileStatsHelper
         end
         least.close()
         # dump all the palindromes but sort desc
-        palifile = File.new(get_results_dir(dbid) + 'palindromes.txt', 'w')
+        palifile = File.new(get_results_dir(db_id) + 'palindromes.txt', 'w')
         pali.sort_by{|k, v| -v}.each do |row|
           #logger.debug "#{row[0]} = #{row[1]}"
           palifile.write("#{row[0]},#{row[1]}\n")
