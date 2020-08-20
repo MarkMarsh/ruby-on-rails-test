@@ -14,7 +14,7 @@
       <th>Filename</th>
       <th>Status</th>
       <th>Progress</th>
-      <th colspan="2">Actions</th>
+      <th colspan="4">Actions</th>
     </tr>
   </thead>
 
@@ -25,6 +25,20 @@
         <td><%= file_stat.status %></td>
         <td><%= file_stat.progress %></td>
         <td><%= link_to 'Show', file_stat %></td>
+        <%  if file_stat.status == 'Processing' %>
+        <%    if is_job_paused?(file_stat.job_id) %>
+                <td><%= link_to 'Unpause', unpause_file_stat_path(file_stat), method: :put %></td>
+        <%    else %>
+                <td><%= link_to 'Pause', pause_file_stat_path(file_stat), method: :put %></td>
+        <%    end %>
+        <%  else %>
+              <td></td>
+        <%  end %>
+        <%  if file_stat.status == 'Processing' %>
+              <td><%= link_to 'Cancel', cancel_file_stat_path(file_stat), method: :put %></td>
+        <%  else %>
+              <td></td>
+        <%  end %>
         <td><%= link_to 'Delete', file_stat, method: :delete, data: { confirm: 'Are you sure?' } %></td>
       </tr>
     <% end %>
