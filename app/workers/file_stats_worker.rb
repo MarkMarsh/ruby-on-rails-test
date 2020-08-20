@@ -6,8 +6,8 @@ class FileStatsWorker
 
   sidekiq_options queue: 'file_stats'
 
-  def perform(filename, dbid)
-    process_file(filename, dbid)
+  def perform(filename, db_id)
+    process_file(filename, db_id)
   end
 
 
