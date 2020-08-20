@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Rails server",
+            "name": "Server",
             "type": "Ruby",
             "request": "launch",
             "program": "${workspaceRoot}/bin/rails",
@@ -14,7 +14,25 @@
             },
             "args": [
                 "server"
-            ]
+            ],
+            "debuggerPort": "1234"
+        },
+        {
+            "name": "Sidekiq",
+            "type": "Ruby",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/bundle",
+            "args": [
+                "exec",
+                "sidekiq"
+            ],
+            "debuggerPort": "1235"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Server + Sidekiq",
+            "configurations": ["Server", "Sidekiq"]
         }
     ]
 }
