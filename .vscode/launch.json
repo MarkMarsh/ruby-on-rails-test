@@ -9,12 +9,13 @@
             "type": "Ruby",
             "request": "launch",
             "program": "${workspaceRoot}/bin/rails",
-            "env": {
-                "REDIS_URL":"redis://localhost:6379/0"
-            },
             "args": [
                 "server"
             ],
+            "env": {
+                "REDIS_URL":"redis://localhost:6379/0",
+                "FILE_STATS_RESULTS_BASE_DIR":"/tmp/file_stats/res/"
+            },
             "debuggerPort": "1234"
         },
         {
@@ -26,6 +27,10 @@
                 "exec",
                 "sidekiq"
             ],
+            "env": {
+                "REDIS_URL":"redis://localhost:6379/0",
+                "FILE_STATS_RESULTS_BASE_DIR":"/tmp/file_stats/res/"
+            },
             "debuggerPort": "1235"
         }
     ],

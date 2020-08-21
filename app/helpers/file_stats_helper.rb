@@ -5,8 +5,14 @@ module FileStatsHelper
   class CancelledException < StandardError
   end
 
+  # stub for integration with authentication
+  def get_current_user()  
+    return "user@email.com"
+  end
+
+  # TODO: check present in init?
   def get_results_base_dir()
-    return('/tmp/file_stats/results/')
+    return ENV["FILE_STATS_RESULTS_BASE_DIR"] || '/tmp/file_stats/results/'
   end
   
   def get_results_dir(db_id)
@@ -14,11 +20,6 @@ module FileStatsHelper
     return dir
   end
   
-  # stub for integration with authentication
-  def get_current_user()  
-    return "Eric"
-  end
-
   # needs improving to search all queues and also to kill jobs that are processing
   def delete_job(job_id)
     ################################## TODO cancel_job(job_id)   # cancel the job if it's currently executing
