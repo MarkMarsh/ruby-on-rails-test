@@ -83,10 +83,10 @@ class FileStatsController < ApplicationController
   # DELETE /file_stats/1
   # DELETE /file_stats/1.json
   def destroy
-    #if @file_stat.status != 'Finished'
+    if @file_stat.status != 'Finished'
       delete_job(@file_stat.job_id)
-    #end
-    cancel_job(@file_stat.job_id)
+    end
+    # 
     delete_results(@file_stat._id.to_s())
 
     @file_stat.destroy

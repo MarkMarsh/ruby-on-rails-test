@@ -10,29 +10,51 @@ module FileStatsHelper
     return "user@email.com"
   end
 
+  # name of the queue
+  def get_queue_name()
+    'file_stats'
+  end
+
   # TODO: check present in init?
   def get_results_base_dir()
     return ENV["FILE_STATS_RESULTS_BASE_DIR"] || '/tmp/file_stats/results/'
   end
-  
+
+  # where the results files are to be stored
   def get_results_dir(db_id)
     dir = "#{get_results_base_dir()}#{db_id}/"
     return dir
   end
   
-  # needs improving to search all queues and also to kill jobs that are processing
-  def delete_job(job_id)
-    ################################## TODO cancel_job(job_id)   # cancel the job if it's currently executing
-    Sidekiq::Queue.new("file_stats").each do |job|
-      if job.jid == job_id
-        job.delete 
-      end
-    end
-  end
-
+  # delete the directory containing the results
+  # can be called even if the results haven't been written
   def delete_results(db_id)
     dir = "#{get_results_base_dir()}#{db_id}/"
     FileUtils.rm_rf(dir)
+  end
+
+  # delete the job from any Sidekiq queues
+  # call cancel_job in case the job is being processed
+  def delete_job(job_id)
+
+    Sidekiq::Queue.new(get_queue_name()).select do |job|
+      job.delete if job.jid == job_id
+    end
+
+    Sidekiq::ScheduledSet.new.select do |job|
+      job.delete if job.jid == job_id
+    end
+  
+    Sidekiq::RetrySet.new.select do |job|
+      job.delete if job.jid == job_id
+    end
+  
+    Sidekiq::DeadSet.new.select do |job|
+      job.delete if job.jid == job_id
+    end
+  
+    cancel_job(job_id)
+
   end
 
   # to report how many jobs are queued
@@ -64,7 +86,8 @@ module FileStatsHelper
   end
 
   # set / test a cancel semaphore
-  # 10 minute timeout should be plenty
+  # 10 minute timeout should be plenty and won't clutter up Redis if
+  # it's not deleted'
   def cancel_job(job_id)
     x = Sidekiq.redis {|c| c.setex("cancel-#{job_id}", 600, 1) }   
     return x
@@ -82,7 +105,8 @@ module FileStatsHelper
     end
   end
 
-  # check whether processing should be paused
+  # check whether processing should be paused and 
+  # sit in a sleep loop until unpaused
   def check_paused(file_stat)
     if file_stat.job_id.length() < 6
       raise "Bad Job ID in check_paused()"
@@ -93,7 +117,7 @@ module FileStatsHelper
     prev_progress = file_stat.progress
     file_stat.update(progress: 'Paused')
     loop do
-      check_cancelled(file_stat)
+      check_cancelled(file_stat)  # job can be cancelled while paused
       sleep 5
       break if !is_job_paused?(file_stat.job_id)
     end 
@@ -109,8 +133,9 @@ module FileStatsHelper
   def process_file(filename, db_id)
     file_stat = nil
     begin
-      file_stat = FileStat.find(db_id)
-      if file_stat == nil
+      begin
+        file_stat = FileStat.find(db_id)
+      rescue
         throw "Failed to find record for FileStat #{db_id}"
       end
       file_stat.update(status: 'Processing', status_message: '')
@@ -205,6 +230,7 @@ module FileStatsHelper
       end
     rescue CancelledException => c
       file_stat.update(status: 'Cancelled', status_message: '')
+      delete_results(db_id)
       return true 
     rescue StandardError => e
       file_stat.update(status: 'Processing error', status_message: e.message)

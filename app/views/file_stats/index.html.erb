@@ -14,6 +14,10 @@
       <th>Filename</th>
       <th>Status</th>
       <th>Progress</th>
+      <% if Rails.env.development? %>
+        <th>db_id</th>
+        <th>job_id</th>
+      <% end %>
       <th colspan="4">Actions</th>
     </tr>
   </thead>
@@ -24,6 +28,10 @@
         <td><%= file_stat.filename %></td>
         <td><%= file_stat.status %></td>
         <td><%= file_stat.progress %></td>
+        <% if Rails.env.development? %>
+          <td><%= file_stat._id.to_s() %></td>
+          <td><%= file_stat.job_id %></td>
+        <% end %>
         <td><%= link_to 'Show', file_stat %></td>
         <%  if file_stat.status == 'Processing' %>
         <%    if is_job_paused?(file_stat.job_id) %>
