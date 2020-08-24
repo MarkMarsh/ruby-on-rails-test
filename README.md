@@ -265,7 +265,7 @@ bundle exec sidekiq -q file_stats
 * Add other file file storage types (S3 etc)
 * Add a file picker for local file system
 * Sort out constants like the queue name
-* 
+* Use some sort of enum for processing states
 * ~~Use MongoDB as the database~~
 * Document running in production mode
 * ~~Test running with distributed workers~~
