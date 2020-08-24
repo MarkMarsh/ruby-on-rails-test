@@ -5,6 +5,9 @@ This project was written as a test of how far I could get with writing a Ruby on
 
 The files are processed in the background using Sidekiq. More processing power can be added by running more Sidekiq workers.
 
+Basic Architecture:
+![Architecture](docs/Architecture.png)
+
 ## Installation
 
 * Check / install the packages in the Packages section below
@@ -127,8 +130,9 @@ This section details the steps required to build and run on AWS instances with t
 
 It takes some liberties with security between the components, relying on AWS security instead.
 
-```
+No load balancer is implemented at the moment.
 
+```
 # create a security group in your VPC that allows all traffic from other members of the group
 # create access to that security group as required for ports 
 # 22 - SSH 
@@ -205,7 +209,9 @@ sudo chmod 777 /mnt/file_stats
 
 # mount the EFS file system with
 sudo mount /mnt/file_stats
-
+```
+### Start the web server
+```
 # put a big(ish) text file in /mnt/file_stats/big.txt
 
 # start the server
@@ -213,7 +219,7 @@ export FILE_STATS_RESULTS_BASE_DIR=/mnt/file_stats/results/
 cd ~/ruby-on-rails-test
 rails server -b 0.0.0.0
 
-# connect a web browser to <ec2 instance public IP>:3000
+# connect a web browser to <ec2 instance public IP>:3000 and
 click “analyse new file” and enter /mnt/file_stats/big.txt
 
 # the file will show as queued but will not process until we add a Sidekiq worker process
